@@ -16,6 +16,7 @@ from scipy.spatial import distance as dist
 
 # function to get the midpoint of two points
 
+
 def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
@@ -28,7 +29,7 @@ def get_coords(template):
 
     # find the template in the overall image
     res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-    threshold = .8
+    threshold = 0.8
 
     loc = np.where(res >= threshold)
 
@@ -39,8 +40,8 @@ def get_coords(template):
     for pt in zip(*loc[::-1]):  # Switch columns and rows
 
         # adjusting to find the scenter of the image
-        centerx = int(pt[0] + w/2)
-        centery = int(pt[1] + h/2)
+        centerx = int(pt[0] + w / 2)
+        centery = int(pt[1] + h / 2)
         center_coord = (centerx, centery)
 
         # debug to circle found templates - cv2.circle(image,centercoord,3,(0, 0, 255))
@@ -80,10 +81,10 @@ green_lower = [153, 240, 159]
 green_upper = [157, 245, 163]
 
 # get template images of markers for measurements
-teemarker_template = cv2.imread('teemarker.png')
-teedistance_lt_template = cv2.imread('distance_lt.png')
-teedistance_rt_template = cv2.imread('distance_rt.png')
-sprinkler_template = cv2.imread('sprinkler.png')
+teemarker_template = cv2.imread("teemarker.png")
+teedistance_lt_template = cv2.imread("distance_lt.png")
+teedistance_rt_template = cv2.imread("distance_rt.png")
+sprinkler_template = cv2.imread("sprinkler.png")
 
 # initialize a list to track the green depths
 green_length_list = []
@@ -119,7 +120,9 @@ for file in file_list:
         edged = cv2.erode(edged, None, iterations=1)
 
         # find contours in the edge map
-        cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cv2.findContours(
+            edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         cnts = imutils.grab_contours(cnts)
 
         try:
@@ -173,7 +176,9 @@ for file in file_list:
         edged = cv2.erode(edged, None, iterations=1)
 
         # find contours in the edge map
-        cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cv2.findContours(
+            edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         cnts = imutils.grab_contours(cnts)
 
         # iterate through the contours to get the bounding box that
@@ -184,8 +189,8 @@ for file in file_list:
         for c in cnts:
             (x, y, w, h) = cv2.boundingRect(c)
 
-            min_x, max_x = min(x, min_x), max(x+w, max_x)
-            min_y, max_y = min(y, min_y), max(y+h, max_y)
+            min_x, max_x = min(x, min_x), max(x + w, max_x)
+            min_y, max_y = min(y, min_y), max(y + h, max_y)
 
         # define corners of the bounding box
         tl = (min_x, max_y)
@@ -238,7 +243,9 @@ for file in file_list:
 
         # find contours in the edge map
 
-        cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cv2.findContours(
+            edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         cnts = imutils.grab_contours(cnts)
 
         try:
@@ -274,9 +281,15 @@ for file in file_list:
         # depending on which way the arrow faces), and sprinkler markers
 
         tee_coords, tee_width, tee_height = get_coords(teemarker_template)
-        distance_lt_coords, distance_lt_width, distance_lt_height = get_coords(teedistance_lt_template)
-        distance_rt_coords, distance_rt_width, distance_rt_height = get_coords(teedistance_rt_template)
-        sprinkler_coords, sprinkler_width, sprinkler_height = get_coords(sprinkler_template)
+        distance_lt_coords, distance_lt_width, distance_lt_height = get_coords(
+            teedistance_lt_template
+        )
+        distance_rt_coords, distance_rt_width, distance_rt_height = get_coords(
+            teedistance_rt_template
+        )
+        sprinkler_coords, sprinkler_width, sprinkler_height = get_coords(
+            sprinkler_template
+        )
 
         # loop through carry markers and measure distance from each tee marker
         for point in distance_lt_coords:
@@ -294,21 +307,31 @@ for file in file_list:
             tee_num = len(dist_list)
 
             # measure how big the label will be so we can center properly
-            (label_width, label_height), baseline = cv2.getTextSize(str(distance), cv2.FONT_HERSHEY_SIMPLEX, text_size, 2)
+            (label_width, label_height), baseline = cv2.getTextSize(
+                str(distance), cv2.FONT_HERSHEY_SIMPLEX, text_size, 2
+            )
 
             # calculate the total label height
-            totalheight = (32 * (tee_num-1) * text_size)
+            totalheight = 32 * (tee_num - 1) * text_size
 
             # declare x and y coordinates to place the text
             x = int(point[0] - (80 * (text_size + 0.1)))
-            y = int(point[1] - totalheight/2 + distance_lt_height/2 + baseline)
+            y = int(point[1] - totalheight / 2 + distance_lt_height / 2 + baseline)
 
-            # declare an increment for each new tee distance (so that they stack vertically)
+            # declare an increment for each new tee distance (so they stack vertically)
             yinc = int(32 * text_size)
 
             # now for each distance found, write it on the image next to the marker
             for distance in dist_list:
-                cv2.putText(image, str(distance), (x, y), cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 0, 0), 2)
+                cv2.putText(
+                    image,
+                    str(distance),
+                    (x, y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    text_size,
+                    (0, 0, 0),
+                    2,
+                )
                 y += yinc
 
         # loop through carry markers and measure distance from each tee marker
@@ -327,22 +350,32 @@ for file in file_list:
             tee_num = len(dist_list)
 
             # measure how big the label will be so we can center properly
-            (label_width, label_height), baseline = cv2.getTextSize(str(distance), cv2.FONT_HERSHEY_SIMPLEX, text_size, 2)
+            (label_width, label_height), baseline = cv2.getTextSize(
+                str(distance), cv2.FONT_HERSHEY_SIMPLEX, text_size, 2
+            )
 
             # calculate the total label height
-            totalheight = (32 * (tee_num-1) * text_size)
+            totalheight = 32 * (tee_num - 1) * text_size
 
             # declare x and y coordinates to place the text
             x = int(point[0] + (14 * (text_size + 0.1)))
-            y = int(point[1] - totalheight/2 + distance_lt_height/2 + baseline)
+            y = int(point[1] - totalheight / 2 + distance_lt_height / 2 + baseline)
 
-            # declare an increment for each new tee distance (so that they stack vertically)
+            # declare an increment for each new tee distance (so they stack vertically)
             yinc = int(32 * text_size)
 
             # now for each distance found, write it on the image next to the marker
 
             for distance in dist_list:
-                cv2.putText(image, str(distance), (x, y), cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 0, 0), 2)
+                cv2.putText(
+                    image,
+                    str(distance),
+                    (x, y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    text_size,
+                    (0, 0, 0),
+                    2,
+                )
                 y += yinc
 
         # loop through the "sprinkler" markers and get distances to the center of the green
@@ -351,17 +384,27 @@ for file in file_list:
             distance = int(distance)
 
             # measuring the size of the label we are adding to properly center the distance
-            (label_width, label_height), baseline = cv2.getTextSize(str(distance), cv2.FONT_HERSHEY_SIMPLEX, text_size, 2)
+            (label_width, label_height), baseline = cv2.getTextSize(
+                str(distance), cv2.FONT_HERSHEY_SIMPLEX, text_size, 2
+            )
 
             # declare x and y points to place the text so that it is centered
-            x = int(point[0] - label_width/2 + sprinkler_width/2)
+            x = int(point[0] - label_width / 2 + sprinkler_width / 2)
             y = int(point[1] + 30)
 
             # write the distance to the center of the green under this marker
-            cv2.putText(image, str(distance), (x, y), cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 0, 0), 2)
+            cv2.putText(
+                image,
+                str(distance),
+                (x, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                text_size,
+                (0, 0, 0),
+                2,
+            )
 
         # write the output image to a folder called "yardages" in our current directory
-        output_path = f'./yardages/{filename}'
+        output_path = f"./yardages/{filename}"
 
         # save the image
         cv2.imwrite(filename=output_path, img=image)
